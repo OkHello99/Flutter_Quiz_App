@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_quiz_app/question_model.dart';
 
 class QuizScreen extends StatefulWidget {
   @override
@@ -6,44 +7,55 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-
   List<Question> questionList = getQuestions();
   int currentQuestionIndex = 0;
   int score = 0;
   Answer? selectedAnswer;
 
-  @override  
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 5, 50, 80),
-      body: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-        child: Column(children: [
-          const Text(
-            "Legyen Ön is Milliomos!",
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
+      backgroundColor: const Color(0xFF11092F),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/logo.png',
+              fit: BoxFit.contain,
+              height: 250,
             ),
-          ),
-          _questionWidget(),
-          _answerList(),
-        ])
+            const SizedBox(height: 20),
+            Container(
+              width: 600,
+              child: _questionWidget(),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              width: 600,
+              child: _answerList(),
+            ),
+            const SizedBox(height: 30),
+            Container(
+              width: 600,
+              child: _nextButton(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  _questionWidget() {
+  Widget _questionWidget() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "Question ${currentQuestionIndex+1}/${questionList.length.toString()}",
+          "Kérdés ${currentQuestionIndex + 1}/${questionList.length}",
           style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+            color: Color(0xFFFFDE21),
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 20),
@@ -52,56 +64,128 @@ class _QuizScreenState extends State<QuizScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: Colors.orangeAccent,
+            gradient: LinearGradient(
+              colors: [Color(0xFF11092F), Color(0xFF2F0940)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
             borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
           ),
           child: Text(
             questionList[currentQuestionIndex].questionText,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ),
       ],
     );
   }
-  _answerList() {
+
+  Widget _answerList() {
     return Column(
       children: questionList[currentQuestionIndex]
-          .answersList
-          .map(
-            (e) => _answerButton(e),
-          )
+          .answerList
+          .map((answer) => _answerButton(answer))
           .toList(),
     );
   }
+
   Widget _answerButton(Answer answer) {
+    bool isSelected = answer == selectedAnswer;
 
-    bool isSelected = answer==selectedAnswer;
-
-    return Container (
+    return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 8),
-      height: 48,
       child: ElevatedButton(
-        child: Text(answer.answerText),
         style: ElevatedButton.styleFrom(
-          shape: const StadiumBorder(),
-          primary: isSelected ? Colors.orangeAccent : Colors.white,
-          onPrimary: isSelected ? Colors.white : Colors.black,
+          foregroundColor: isSelected ? Colors.white : Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          backgroundColor: isSelected ? Color(0xFFFFDE21) : Colors.white,
+          elevation: isSelected ? 10 : 5,
         ),
-        onPressed () {
-          if (selectedAnswer == null){
-            if(answer.isCorrect){
+        onPressed: () {
+          setState(() {
+            selectedAnswer = answer;
+            if (answer.isCorrect) {
               score++;
             }
-            setState() {
-              selectedAnswer = answer;
-            });
-          }
+          });
         },
+        child: Text(
+          answer.answerText,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.black : Colors.black,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _nextButton() {
+    return ElevatedButton(
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+        backgroundColor: Color(0xFFFFDE21),
+        foregroundColor: Colors.black,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30),
+        ),
+        elevation: 5,
+      ),
+      onPressed: () {
+        if (currentQuestionIndex < questionList.length - 1) {
+          setState(() {
+            currentQuestionIndex++;
+            selectedAnswer = null;
+          });
+        } else {
+          _showScoreDialog();
+        }
+      },
+      child: Text(
+        currentQuestionIndex < questionList.length - 1 ? "Következő" : "Befejezés",
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  void _showScoreDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Kvíz Kész!"),
+        content: Text("Pontszámod: $score/${questionList.length}"),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() {
+                currentQuestionIndex = 0;
+                score = 0;
+                selectedAnswer = null;
+              });
+            },
+            child: const Text("Újraindítás"),
+          ),
+        ],
       ),
     );
   }
