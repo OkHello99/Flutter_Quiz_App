@@ -6,6 +6,12 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
+
+  List<Question> questionList = getQuestions();
+  int currentQuestionIndex = 0;
+  int score = 0;
+  Answer? selectedAnswer;
+
   @override  
   Widget build(BuildContext context) {
     return Scaffold(
@@ -21,6 +27,7 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ),
           _questionWidget(),
+          _answerList(),
         ])
       ),
     );
@@ -32,14 +39,14 @@ class _QuizScreenState extends State<QuizScreen> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Text(
-          "QUestion 1/3",
+          "Question ${currentQuestionIndex+1}/${questionList.length.toString()}",
           style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w600,
           ),
         ),
-        SizedBox(height: 20),
+        const SizedBox(height: 20),
         Container(
           alignment: Alignment.center,
           width: double.infinity,
@@ -49,8 +56,8 @@ class _QuizScreenState extends State<QuizScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
-            "Ez lösz a kérdés",
-            style: TextStyle(
+            questionList[currentQuestionIndex].questionText,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -58,6 +65,44 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
         ),
       ],
+    );
+  }
+  _answerList() {
+    return Column(
+      children: questionList[currentQuestionIndex]
+          .answersList
+          .map(
+            (e) => _answerButton(e),
+          )
+          .toList(),
+    );
+  }
+  Widget _answerButton(Answer answer) {
+
+    bool isSelected = answer==selectedAnswer;
+
+    return Container (
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      height: 48,
+      child: ElevatedButton(
+        child: Text(answer.answerText),
+        style: ElevatedButton.styleFrom(
+          shape: const StadiumBorder(),
+          primary: isSelected ? Colors.orangeAccent : Colors.white,
+          onPrimary: isSelected ? Colors.white : Colors.black,
+        ),
+        onPressed () {
+          if (selectedAnswer == null){
+            if(answer.isCorrect){
+              score++;
+            }
+            setState() {
+              selectedAnswer = answer;
+            });
+          }
+        },
+      ),
     );
   }
 }
