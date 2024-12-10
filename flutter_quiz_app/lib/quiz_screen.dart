@@ -64,9 +64,9 @@ class _QuizScreenState extends State<QuizScreen> {
   bool isAudienceHelpUsed = false;
 
   final List<int> rewardLevels = [
-    10000, 20000, 50000, 100000, 250000, 
-    500000, 750000, 1000000, 1500000, 2000000, 
-    5000000, 10000000, 15000000, 25000000, 50000000
+    10000, 10000, 30000, 50000, 150000, 
+    250000, 250000, 250000, 500000, 500000, 
+    3000000, 5000000, 5000000, 10000000, 25000000
   ];
 
   @override
@@ -126,7 +126,7 @@ class _QuizScreenState extends State<QuizScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Kérdés ${currentQuestionIndex + 1}/${questionList.length}, ${rewardLevels[currentQuestionIndex]} Ft-ért!",
+                "Kérdés ${currentQuestionIndex + 1}/${questionList.length}, ${rewardLevels[currentQuestionIndex] + score} Ft-ért!",
               style: const TextStyle(
                 color: Color(0xFFFFDE21),
                 fontSize: 22,
