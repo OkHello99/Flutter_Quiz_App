@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quiz_app/question_model.dart';
+import 'dart:math';
 
 
 class MenuScreen extends StatelessWidget {
@@ -59,6 +60,9 @@ class _QuizScreenState extends State<QuizScreen> {
   int score = 0;
   Answer? selectedAnswer;
 
+  // közönség segítség volt-e már használva ---------------------------------------------
+  bool isAudienceHelpUsed = false;
+
   final List<int> rewardLevels = [
     10000, 20000, 50000, 100000, 250000, 
     500000, 750000, 1000000, 1500000, 2000000, 
@@ -88,6 +92,21 @@ class _QuizScreenState extends State<QuizScreen> {
               width: 600,
               child: _answerList(),
             ),
+
+            // Segítség ikon sor ---------------------------------------------------------------
+            const SizedBox(height:20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: Icon(Icons.people),
+                  color: isAudienceHelpUsed ? Colors.grey : Colors.green,
+                  iconSize: 40,
+                  onPressed: isAudienceHelpUsed ? null : _useAudienceHelp,
+                ),
+              ],
+            ),
+            //----------------------------------------------------------------------------------
             const SizedBox(height: 30),
             SizedBox(
               width: 600,
@@ -239,6 +258,48 @@ Widget _nextButton() {
     ),
   );
 }
+
+// Közönség segítség ------------------------------------------------------------------
+void _useAudienceHelp() {
+    setState(() {
+      isAudienceHelpUsed = true;
+    });
+
+    List<int> audienceVotes = _generateAudienceVotes();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Közönség szavazás"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(
+            4,
+            (index) => Text(
+              "${questionList[currentQuestionIndex].answerList[index].answerText}: ${audienceVotes[index]}%",
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  List<int> _generateAudienceVotes() {
+    int correctIndex = questionList[currentQuestionIndex]
+        .answerList
+        .indexWhere((answer) => answer.isCorrect);
+
+    List<int> votes = List.generate(4, (_) => Random().nextInt(30));
+    votes[correctIndex] = 70 + Random().nextInt(30);
+
+    int total = votes.reduce((a, b) => a + b);
+    votes = votes.map((vote) => (vote / total * 100).round()).toList();
+
+    return votes;
+  }
+
+//--------------------------------------------------------------------------------------
 
   void _nextQuestion() {
     if (currentQuestionIndex < questionList.length - 1) {
