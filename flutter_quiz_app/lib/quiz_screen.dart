@@ -1,6 +1,53 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quiz_app/question_model.dart';
 
+
+class MenuScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF11092F),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'assets/logo.png',
+              fit: BoxFit.contain,
+              height: 250,
+            ),
+            const SizedBox(height: 50),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                backgroundColor: const Color(0xFFFFDE21),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                elevation: 5,
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => QuizScreen()),
+                );
+              },
+              child: const Text(
+                "Start",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class QuizScreen extends StatefulWidget {
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -11,6 +58,12 @@ class _QuizScreenState extends State<QuizScreen> {
   int currentQuestionIndex = 0;
   int score = 0;
   Answer? selectedAnswer;
+
+  final List<int> rewardLevels = [
+    10000, 20000, 50000, 100000, 250000, 
+    500000, 750000, 1000000, 1500000, 2000000, 
+    5000000, 10000000, 15000000, 25000000, 50000000
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -26,17 +79,17 @@ class _QuizScreenState extends State<QuizScreen> {
               height: 250,
             ),
             const SizedBox(height: 20),
-            Container(
+            SizedBox(
               width: 600,
               child: _questionWidget(),
             ),
             const SizedBox(height: 20),
-            Container(
+            SizedBox(
               width: 600,
               child: _answerList(),
             ),
             const SizedBox(height: 30),
-            Container(
+            SizedBox(
               width: 600,
               child: _nextButton(),
             ),
@@ -50,13 +103,26 @@ class _QuizScreenState extends State<QuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          "Kérdés ${currentQuestionIndex + 1}/${questionList.length}",
-          style: const TextStyle(
-            color: Color(0xFFFFDE21),
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Kérdés ${currentQuestionIndex + 1}/${questionList.length}, ${rewardLevels[currentQuestionIndex]} Ft-ért!",
+              style: const TextStyle(
+                color: Color(0xFFFFDE21),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              "Eddig: $score Ft",
+              style: const TextStyle(
+                color: Color(0xFFFFDE21),
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 20),
         Container(
@@ -64,7 +130,7 @@ class _QuizScreenState extends State<QuizScreen> {
           width: double.infinity,
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
+            gradient: const LinearGradient(
               colors: [Color(0xFF11092F), Color(0xFF2F0940)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -113,15 +179,12 @@ class _QuizScreenState extends State<QuizScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
-          backgroundColor: isSelected ? Color(0xFFFFDE21) : Colors.white,
+          backgroundColor: isSelected ? const Color(0xFFFFDE21) : Colors.white,
           elevation: isSelected ? 10 : 5,
         ),
         onPressed: () {
           setState(() {
             selectedAnswer = answer;
-            if (answer.isCorrect) {
-              score++;
-            }
           });
         },
         child: Text(
@@ -136,57 +199,103 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  Widget _nextButton() {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-        backgroundColor: Color(0xFFFFDE21),
-        foregroundColor: Colors.black,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
-        elevation: 5,
+Widget _nextButton() {
+  return ElevatedButton(
+    style: ElevatedButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+      backgroundColor: const Color(0xFFFFDE21),
+      foregroundColor: Colors.black,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(30),
       ),
-      onPressed: () {
-        if (currentQuestionIndex < questionList.length - 1) {
-          setState(() {
-            currentQuestionIndex++;
-            selectedAnswer = null;
-          });
+      elevation: 5,
+    ),
+    onPressed: () {
+      if (selectedAnswer == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Kérlek jelölj meg egy választ!")),
+        );
+        return;
+      }
+
+      if (selectedAnswer!.isCorrect) {
+        score += rewardLevels[currentQuestionIndex];
+
+        if ((currentQuestionIndex + 1) % 5 == 0 || currentQuestionIndex == questionList.length - 1) {
+          _showExitDialog();
         } else {
-          _showScoreDialog();
+          _nextQuestion();
         }
-      },
-      child: Text(
-        currentQuestionIndex < questionList.length - 1 ? "Következő" : "Befejezés",
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-        ),
+      } else {
+        _showScoreDialog();
+      }
+    },
+    child: Text(
+      currentQuestionIndex < questionList.length - 1 ? "Következő" : "Vége",
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
       ),
-    );
+    ),
+  );
+}
+
+  void _nextQuestion() {
+    if (currentQuestionIndex < questionList.length - 1) {
+      setState(() {
+        currentQuestionIndex++;
+        selectedAnswer = null;
+      });
+    } else {
+      _showScoreDialog();
+    }
   }
 
-  void _showScoreDialog() {
+  void _showExitDialog() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text("Kvíz Kész!"),
-        content: Text("Pontszámod: $score/${questionList.length}"),
+        title: const Text("Kiszállás?"),
+        content: Text("Szeretnél kiszállni $score Ft-ért?"),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              setState(() {
-                currentQuestionIndex = 0;
-                score = 0;
-                selectedAnswer = null;
-              });
+              _showScoreDialog();
             },
-            child: const Text("Újraindítás"),
+            child: const Text("Igen"),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _nextQuestion();
+            },
+            child: const Text("Nem"),
           ),
         ],
       ),
     );
   }
+
+void _showScoreDialog() {
+  showDialog(
+    context: context,
+    builder: (_) => AlertDialog(
+      title: const Text("Játék vége!"),
+      content: Text("Nyereményed: $score Ft"),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => MenuScreen()),
+              (route) => false,
+            );
+          },
+          child: const Text("Vissza a menübe!"),
+        ),
+      ],
+    ),
+  );
+}
 }
