@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_quiz_app/question_model.dart';
 import 'dart:math';
+import 'package:audioplayers/audioplayers.dart';
 
+class Hatterzene {
+  
+  static final AudioPlayer _audioPlayer = AudioPlayer();
+
+  static Future<void> foCim(String url) async {
+
+    await _audioPlayer.setReleaseMode(ReleaseMode.loop);
+    await _audioPlayer.play(UrlSource(url));
+    
+  }
+}
 
 class MenuScreen extends StatelessWidget {
   @override
@@ -33,6 +45,7 @@ class MenuScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (context) => QuizScreen()),
                 );
+                Hatterzene.foCim('assets/background.mp3');
               },
               child: const Text(
                 "Start",
