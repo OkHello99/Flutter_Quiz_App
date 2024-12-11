@@ -60,14 +60,96 @@ class _QuizScreenState extends State<QuizScreen> {
   int score = 0;
   Answer? selectedAnswer;
 
-  // közönség segítség volt-e már használva ---------------------------------------------
-  bool isAudienceHelpUsed = false;
-
   final List<int> rewardLevels = [
     10000, 10000, 30000, 50000, 150000, 
     250000, 250000, 250000, 500000, 500000, 
     3000000, 5000000, 5000000, 10000000, 25000000
   ];
+
+  // Közönség segítség ----------------------------------------------------------
+
+  bool isKozonsegUsed = false;
+
+  void _useKozonsegHelp() {
+    setState(() {
+      isKozonsegUsed = true;
+    });
+
+    List<int> kozonsegSzavazas = _kozonsegGeneral();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Közönség szavazás"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(
+            4,
+            (index) => Text(
+              "${questionList[currentQuestionIndex].answerList[index].answerText}: ${kozonsegSzavazas[index]}%",
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<int> _kozonsegGeneral() {
+    int correctIndex = questionList[currentQuestionIndex]
+        .answerList
+        .indexWhere((answer) => answer.isCorrect);
+
+    List<int> votes = List.generate(4, (_) => Random().nextInt(30));
+    votes[correctIndex] = 70 + Random().nextInt(30);
+
+    int total = votes.reduce((a, b) => a + b);
+    votes = votes.map((vote) => (vote / total * 100).round()).toList();
+
+    return votes;
+  }
+
+  // Felezős segítség -----------------------------------------------------------
+  bool isFelezosUsed = false;
+
+  void _useFelezosHelp() {
+    if (isFelezosUsed) return;
+    
+    setState(() {
+      isFelezosUsed = true;
+    });
+
+    int correctIndex = questionList[currentQuestionIndex]
+        .answerList
+        .indexWhere((answer) => answer.isCorrect);
+
+    List<int> incorrectIndices = List.generate(4, (index) => index)
+      ..remove(correctIndex);
+
+    incorrectIndices.shuffle();
+    incorrectIndices = incorrectIndices.take(2).toList();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Felezős segítség"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(
+            4,
+            (index) {
+              if (incorrectIndices.contains(index)) {
+                return const SizedBox.shrink();
+              }
+              return Text(questionList[currentQuestionIndex]
+                  .answerList[index]
+                  .answerText);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+  //------------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -92,21 +174,27 @@ class _QuizScreenState extends State<QuizScreen> {
               width: 600,
               child: _answerList(),
             ),
-
-            // Segítség ikon sor ---------------------------------------------------------------
-            const SizedBox(height:20),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // Közönség ikon
                 IconButton(
                   icon: Icon(Icons.people),
-                  color: isAudienceHelpUsed ? Colors.grey : Colors.green,
+                  color: isKozonsegUsed ? Colors.grey : const Color(0xFFFFDE21),
                   iconSize: 40,
-                  onPressed: isAudienceHelpUsed ? null : _useAudienceHelp,
+                  onPressed: isKozonsegUsed ? null : _useKozonsegHelp,
+                ),
+                const SizedBox(width: 20),
+                // Felezős ikon
+                IconButton(
+                  icon: Icon(Icons.percent),
+                  color: isFelezosUsed ? Colors.grey : const Color(0xFFFFDE21),
+                  iconSize: 40,
+                  onPressed: isFelezosUsed ? null : _useFelezosHelp,
                 ),
               ],
             ),
-            //----------------------------------------------------------------------------------
             const SizedBox(height: 30),
             SizedBox(
               width: 600,
@@ -258,48 +346,6 @@ Widget _nextButton() {
     ),
   );
 }
-
-// Közönség segítség ------------------------------------------------------------------
-void _useAudienceHelp() {
-    setState(() {
-      isAudienceHelpUsed = true;
-    });
-
-    List<int> audienceVotes = _generateAudienceVotes();
-
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text("Közönség szavazás"),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: List.generate(
-            4,
-            (index) => Text(
-              "${questionList[currentQuestionIndex].answerList[index].answerText}: ${audienceVotes[index]}%",
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-
-  List<int> _generateAudienceVotes() {
-    int correctIndex = questionList[currentQuestionIndex]
-        .answerList
-        .indexWhere((answer) => answer.isCorrect);
-
-    List<int> votes = List.generate(4, (_) => Random().nextInt(30));
-    votes[correctIndex] = 70 + Random().nextInt(30);
-
-    int total = votes.reduce((a, b) => a + b);
-    votes = votes.map((vote) => (vote / total * 100).round()).toList();
-
-    return votes;
-  }
-
-//--------------------------------------------------------------------------------------
 
   void _nextQuestion() {
     if (currentQuestionIndex < questionList.length - 1) {
